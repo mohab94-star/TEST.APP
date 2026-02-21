@@ -1,0 +1,20 @@
+name: Tailscale Connect
+on: [push]
+
+jobs:
+  connect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          authkey: ${{ secrets.TS_AUTHKEY }}
+
+      - name: Verify RDP Machine is Online
+        run: |
+          tailscale status
+          # Replace the IP below with your RDP machine's Tailscale IP
+          ping -c 3 100.x.y.z 
