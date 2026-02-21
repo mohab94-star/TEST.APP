@@ -1,0 +1,19 @@
+name: Connect Tailscale
+on: [push]
+
+jobs:
+  terminal:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          authkey: ${{ secrets.TS_AUTHKEY }}
+
+      - name: Verify Connection
+        run: |
+          tailscale status
+          # This will show your private devices in the GitHub logs!
