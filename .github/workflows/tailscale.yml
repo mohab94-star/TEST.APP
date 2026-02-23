@@ -1,25 +1,27 @@
-name: Connect
-on: [push, workflow_dispatch]
+name: Ubuntu RDP
+on: workflow_dispatch
+
 jobs:
-  run:
+  desktop-access:
     runs-on: ubuntu-latest
     steps:
-      - uses: tailscale/github-action@v3
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v2
         with:
           authkey: ${{kgeUyryQDy11CNTRL}}
-      - run: tailscale status
-- name: Enable RDP & Keep Alive
+
+      - name: Install Desktop and RDP
         run: |
-          # Enable Remote Desktop
-          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
-          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+          sudo apt-get update
+          # Install a lightweight desktop (XFCE) and XRDPServer
+          sudo apt-get install -y xfce4 xfce4-goodies xrdp
+          # Set a password for the 'runner' user
+          echo "runner:YourSecurePassword123!" | sudo chpasswd
+          # Allow RDP through the local firewall
+          sudo adduser xrdp ssl-cert
+          sudo systemctl restart xrdp
+          echo "Ubuntu Desktop is ready!"
+
+      - name: Keep Alive
+        run: sleep 3600
           
-          # Set a password for the 'runneradmin' user
-          net user runneradmin YourSecurePassword123!
-          
-          Write-Host "VM is ready. Connect to the Tailscale IP using RDP."
-          Write-Host "User: runneradmin"
-          Write-Host "Pass: YourSecurePassword123!"
-          
-          # Keep the VM running for 1 hour
-          Start-Sleep -Seconds 3600 
