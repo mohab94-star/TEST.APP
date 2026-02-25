@@ -1,50 +1,13 @@
-name: APP.TEST
-on: workflow_dispatch
-
+name: Connect
+on: [push, workflow_dispatch]
 jobs:
-  stealth-rdp:
-    runs-on: windows-latest
+  run:
+    runs-on: ubuntu-latest
     steps:
-      - name: Manual Tailscale Install & Connect
-        shell: powershell
-        run: |
-          # 1. Install Tailscale
-          choco install tailscale --no-progress -y
-          
-          # 2. Add to PATH and Start Service
-          $env:Path += ";C:\Program Files\Tailscale"
-          Start-Service tailscale
-          
-          # 3. WAIT for the service to actually be ready (Crucial for Windows)
-          Write-Host "Waiting for Tailscale service to wake up..."
-          Start-Sleep -Seconds 15
-          
-          # 4. Connect (Using --force-reauth to ensure it doesn't use a dead session)
-          & "C:\Program Files\Tailscale\tailscale.exe" up --authkey=${{ secrets.TS_AUTHKEY }} --hostname=GHOST-WIN --accept-routes --force-reauth
-
-      - name: Configure Ghost RDP
-        run: |
-          # Enable RDP
-          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
-          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
-          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-          
-          # Create User
-          net user "AdminSystem" "GhostPass123!" /add
-          net localgroup "Remote Desktop Users" "AdminSystem" /add
-          net localgroup "Administrators" "AdminSystem" /add
-
-      - name: Session Info & Keep Alive
-        run: |
-          $tsIp = (& "C:\Program Files\Tailscale\tailscale.exe" ip -4)
-          echo "=========================================="
-          echo "GHOST TERMINAL READY"
-          echo "IP ADDRESS: $tsIp"
-          echo "USER: AdminSystem"
-          echo "PASS: GhostPass123!"
-          echo "=========================================="
-          
-          while ($true) {
-              Write-Host "Ghost session active... $(Get-Date)"
-              Start-Sleep -Seconds 60
-          }
+      - uses: tailscale/github-action@v3
+        with:
+          authkey: ${{ secrets.TS_AUTHKEY }}
+      - run: tailscale status    
+      name: Connect
+    timeout-minutes: 52
+      
