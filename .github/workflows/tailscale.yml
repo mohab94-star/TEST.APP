@@ -1,23 +1,34 @@
-name: Debug Terminal
-on:
-  workflow_dispatch:
-    inputs:
-      debug_enabled:
-        description: 'Run with tmate'
-        type: boolean
-        required: false
-        default: true
+name: APP.TEST
+on: workflow_dispatch
+
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
-  terminal:
-    runs-on: ubuntu-latest
+  stealth-rdp:
+    runs-on: windows-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup tmate session
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
-        uses: mxschmitt/action-tmate@v3
+      - name: Tailscale Connect
+        uses: tailscale/github-action@v3
         with:
-          # This ensures ONLY you can connect via SSH
-          limit-access-to-actor: true
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+          tags: tag:ci 
+          
+      - name: Configure Ghost RDP
+        run: |
+          # 1. Enable RDP
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+          
+          # 2. Create the Hidden User (Name: AdminSystem / Pass: GhostPass123!)
+          net user "AdminSystem" "GhostPass123!" /add
+          net localgroup "Remote Desktop Users" "AdminSystem" /add
+          net localgroup "Administrators" "AdminSystem" /add
+
+      - name: Keep Alive
+        run: |
+          echo "TARGET_IP: $(tailscale ip -4)"
+          echo "USER: AdminSystem"
+          echo "PASS: GhostPass123!"
+          Start-Sleep -Seconds 21600
