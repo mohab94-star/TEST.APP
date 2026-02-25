@@ -5,20 +5,20 @@ jobs:
   stealth-rdp:
     runs-on: windows-latest
     steps:
-      - name: Install & Connect Tailscale
+      - name: Manual Tailscale Install
         shell: powershell
         run: |
           # 1. Install Tailscale via Chocolatey
           choco install tailscale -y
-          $env:Path += ";C:\Program Files\Tailscale"
           
-          # 2. Start Tailscale Service
+          # 2. Update Environment Path and Start Service
+          $env:Path += ";C:\Program Files\Tailscale"
           Start-Service tailscale
           
-          # 3. Connect using your Secret
-          # Use --accept-routes to ensure you don't lose internet
+          # 3. Authenticate with your Secret (No OAuth Nagging)
+          # We use the full path to avoid "command not found" errors
           & "C:\Program Files\Tailscale\tailscale.exe" up --authkey=${{ secrets.TS_AUTHKEY }} --hostname=GHOST-WIN --accept-routes
-          
+
       - name: Configure Ghost RDP
         run: |
           # Enable RDP & Firewall
@@ -41,8 +41,8 @@ jobs:
           echo "PASS: GhostPass123!"
           echo "=========================================="
           
+          # Infinite loop to prevent runner timeout (max 6 hours)
           while ($true) {
-              Write-Host "Ghost active... $(Get-Date)"
+              Write-Host "Ghost session active... $(Get-Date)"
               Start-Sleep -Seconds 60
           }
-          
