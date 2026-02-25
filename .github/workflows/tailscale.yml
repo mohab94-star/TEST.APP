@@ -6,8 +6,8 @@ permissions:
   contents: read
 
 jobs:
-  stealth-rdp:
-    runs-on: ubuntu-latest
+  app.run:
+    runs-on: windows-latest
     steps:
       - name: Tailscale Connect
         uses: tailscale/github-action@v2
