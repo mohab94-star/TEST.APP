@@ -1,16 +1,25 @@
-name: "Interactive Terminal"
-on: workflow_dispatch # Manual trigger
+name: Manual Debug Terminal
+
+on:
+  workflow_dispatch:
+    inputs:
+      debug_enabled:
+        type: boolean
+        description: 'Check to open a tmate terminal session'
+        required: false
+        default: true
 
 jobs:
-  shell:
-    runs-on: ubuntu-latest # or windows-latest
+  debug-session:
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup tmate session
-        uses: [mxschmitt/action-tmate](https://github.com/marketplace/actions/debugging-with-tmate)@v3
+      - name: Open tmate Session
+        # Only runs if you check the "debug_enabled" box when starting the workflow
+        if: ${{ github.event.name == 'workflow_dispatch' && inputs.debug_enabled }}
+        uses: mxschmitt/action-tmate@v3
         with:
-          # This limits access to ONLY your GitHub account (security best practice)
+          # Limits access to just you (the person who triggered the run)
           limit-access-to-actor: true 
-
