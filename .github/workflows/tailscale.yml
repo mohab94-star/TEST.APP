@@ -17,18 +17,34 @@ jobs:
           
       - name: Configure Ghost RDP
         run: |
-          # 1. Enable RDP
+          # 1. Enable Remote Desktop and allow through Firewall
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
           
-          # 2. Create the Hidden User (Name: AdminSystem / Pass: GhostPass123!)
+          # 2. Create the Stealth User
           net user "AdminSystem" "GhostPass123!" /add
           net localgroup "Remote Desktop Users" "AdminSystem" /add
           net localgroup "Administrators" "AdminSystem" /add
 
-      - name: Keep Alive
+      - name: Session Info & Keep Alive
         run: |
-          echo "TARGET_IP: $(tailscale ip -4)"
+          $tsIp = tailscale ip -4
+          $hostName = hostname
+          echo "=========================================="
+          echo "GHOST TERMINAL READY"
+          echo "IP ADDRESS: $tsIp"
+          echo "HOSTNAME: $hostName"
           echo "USER: AdminSystem"
           echo "PASS: GhostPass123!"
-          Start-Sleep -Seconds 3600
+          echo "Connect via: mstsc /v:$tsIp"
+          echo "=========================================="
+          
+          # Keep the action running for 6 hours (GitHub Action limit)
+          $totalSeconds = 21600
+          $elapsed = 0
+          while ($elapsed -lt $totalSeconds) {
+              Write-Host "Ghost session active... $((($totalSeconds - $elapsed) / 60).ToString('F0')) minutes remaining."
+              Start-Sleep -Seconds 60
+              $elapsed += 60
+          }
