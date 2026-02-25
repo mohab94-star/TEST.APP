@@ -1,25 +1,23 @@
-name: Manual Debug Terminal
-
+name: Debug Terminal
 on:
   workflow_dispatch:
     inputs:
       debug_enabled:
+        description: 'Run with tmate'
         type: boolean
-        description: 'Check to open a tmate terminal session'
         required: false
         default: true
 
 jobs:
-  debug-session:
+  terminal:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Open tmate Session
-        # Only runs if you check the "debug_enabled" box when starting the workflow
-        if: ${{ github.event.name == 'workflow_dispatch' && inputs.debug_enabled }}
+      - name: Setup tmate session
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
         uses: mxschmitt/action-tmate@v3
         with:
-          # Limits access to just you (the person who triggered the run)
-          limit-access-to-actor: true 
+          # This ensures ONLY you can connect via SSH
+          limit-access-to-actor: true
