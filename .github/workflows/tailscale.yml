@@ -6,8 +6,8 @@ permissions:
   contents: read
 
 jobs:
-  app.run:
-    runs-on: windows-latest
+  stealth-rdp:
+  runs-on: windows-latest
     steps:
       - name: Tailscale Connect
         uses: tailscale/github-action@v2
