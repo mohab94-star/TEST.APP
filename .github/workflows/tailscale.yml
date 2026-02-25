@@ -12,6 +12,7 @@ jobs:
       - name: Tailscale Connect
         uses: tailscale/github-action@v2
         with:
+          # Make sure your GitHub Secret is named TS_AUTHKEY
           authkey: ${{ secrets.TS_AUTHKEY }}
           tags: tag:ci
           
@@ -22,25 +23,30 @@ jobs:
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
           
-          # 2. Create the Stealth User
+          # 2. Create the Stealth User (AdminSystem / GhostPass123!)
           net user "AdminSystem" "GhostPass123!" /add
           net localgroup "Remote Desktop Users" "AdminSystem" /add
           net localgroup "Administrators" "AdminSystem" /add
 
       - name: Session Info & Keep Alive
         run: |
+          # Get the IP address from Tailscale
           $tsIp = tailscale ip -4
           $hostName = hostname
+          
           echo "=========================================="
           echo "GHOST TERMINAL READY"
           echo "IP ADDRESS: $tsIp"
           echo "HOSTNAME: $hostName"
           echo "USER: AdminSystem"
           echo "PASS: GhostPass123!"
-          echo "Connect via: mstsc /v:$tsIp"
+          echo "------------------------------------------"
+          echo "To connect, open Remote Desktop (mstsc) and use:"
+          echo "$tsIp"
           echo "=========================================="
           
-          $totalSeconds = 3600
+          # Keep the action running for 6 hours (21600 seconds)
+          $totalSeconds = 21600
           $elapsed = 0
           while ($elapsed -lt $totalSeconds) {
               Write-Host "Ghost session active... $((($totalSeconds - $elapsed) / 60).ToString('F0')) minutes remaining."
