@@ -1,22 +1,14 @@
-name: Intel Xeon Cloud Terminal
-on: [workflow_dispatch] # Manually start it from the Actions tab
-
-jobs:
-  xeon-session:
-    runs-on: ubuntu-latest # Standard runners are often Intel-based VMs
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Check CPU Specs (Vim Style)
-        # Verify if you got a Xeon! 
-        run: |
-          echo "--- CPU INFORMATION ---"
-          lscpu | grep "Model name"
-          cat /proc/cpuinfo | grep "xeon" || echo "Note: This instance may be AMD EPYC"
-
-      - name: Setup Interactive Terminal
-        # This starts a 'tmate' session and prints a link to join
-        uses: mxschmitt/action-tmate@v3
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v2
         with:
-          limit-access-to-user: ${{ github.actor }}
+          # Use the key you generated (tskey-auth-...)
+          authkey: ${{ secrets.TS_AUTHKEY }}
+
+      - name: Verify Xeon Mesh Status
+        # Now this will work instead of giving Exit Code 1
+        run: |
+          tailscale status
+          echo "Connected to the mesh at 10Gbps!"
+          
+      - name: Interactive Terminal
+        uses: mxschmitt/action-tmate@v3
