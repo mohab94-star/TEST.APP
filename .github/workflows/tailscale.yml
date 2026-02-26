@@ -1,16 +1,22 @@
-name: Connect
-on: [push, workflow_dispatch]
+name: Intel Xeon Cloud Terminal
+on: [workflow_dispatch] # Manually start it from the Actions tab
 
 jobs:
-  run:
-    runs-on: ubuntu-latest
-    timeout-minutes: 52  # <--- This kills the job and connection at 52 mins
+  xeon-session:
+    runs-on: ubuntu-latest # Standard runners are often Intel-based VMs
     steps:
-      - uses: tailscale/github-action@v3
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check CPU Specs (Vim Style)
+        # Verify if you got a Xeon! 
+        run: |
+          echo "--- CPU INFORMATION ---"
+          lscpu | grep "Model name"
+          cat /proc/cpuinfo | grep "xeon" || echo "Note: This instance may be AMD EPYC"
+
+      - name: Setup Interactive Terminal
+        # This starts a 'tmate' session and prints a link to join
+        uses: mxschmitt/action-tmate@v3
         with:
-          authkey: ${{ secrets.TS_AUTHKEY }}
-      - run: |
-          tailscale status
-          # If you want it to STAY connected for the full 52 minutes, 
-          # you need a command that keeps the runner busy, like:
-          sleep 52m 
+          limit-access-to-user: ${{ github.actor }}
